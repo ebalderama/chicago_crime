@@ -8,19 +8,18 @@ library(rgeos)
 library(dplyr)
 
 # READ AND MODIFY SHAPEFILES
-region <- readOGR(dsn="./Shapefiles/CommunityAreas", layer="CommunityAreas")
+region <- readOGR(dsn="Shapefiles/CommAreas", layer="CommAreas")
 plot(region)
 lookup <- data.frame()
 lookup <- rbind(lookup, region@data)
-lookup$area_numbe <- as.character(lookup$area_numbe)
-lookup$community <- as.character(lookup$community)
-lookup$city <- NA
-lookup$city <- "Chicago"
+lookup$AREA_NUMBE <- as.character(lookup$AREA_NUMBE)
+lookup$COMMUNITY <- as.character(lookup$COMMUNITY)
+lookup$CITY <- NA
+lookup$CITY <- "Chicago"
 
 # MERGE
-region@data$area_numbe <- as.character(region@data$area_numbe)
-region@data <- full_join(region@data, lookup, by="area_numbe")
-region@data <- select(region@data, -community.x)
+region@data$AREA_NUMBE <- as.character(region@data$AREA_NUMBE)
+region@data <- full_join(region@data, lookup, by="AREA_NUMBE")
 row.names(region) <- row.names(region@data)
 region <- spChFIDs(region, row.names(region))
 
@@ -29,8 +28,13 @@ region <- gUnaryUnion(region, id=region@data$country)
 
 # MODIFY DATAFRAME
 row.names(region) <- as.character(1:length(region))
-lookup <- unique(lookup$city)
+lookup <- unique(lookup$CITY)
 lookup <- as.data.frame(lookup)
-colnames(lookup) <- "city"
+colnames(lookup) <- "CITY"
 region <- SpatialPolygonsDataFrame(region, lookup)
-plot(region)
+
+# SAVE
+save(region, file="RData/region.RData")
+
+
+

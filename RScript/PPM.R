@@ -2,14 +2,10 @@
 # POINT PROCESS MODELLING
 #==============================================================================
 
-# WORKING DIRECTORY
-getwd()
-setwd("/Users/Jonathan/Documents/R/Chicago/WorkingDirectory")
-
-# LOAD CHECKPOINT
-load("/Users/Jonathan/Documents/R/Chicago/WorkingDirectory/RDataFiles/assaultxy.RData")
-load("/Users/Jonathan/Documents/R/Chicago/WorkingDirectory/RDataFiles/region.RData")
-load("/Users/Jonathan/Documents/R/Chicago/WorkingDirectory/RDataFiles/park.RData")
+# LOAD FILES
+load("RData/assaultxy.RData")
+load("RData/region.RData")
+load("RData/park.RData")
 
 # SMOOTHING
 poly <- region@polygons[[1]]@Polygons[[3]]@coords
