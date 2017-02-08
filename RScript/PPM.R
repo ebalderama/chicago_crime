@@ -18,6 +18,12 @@ image.plot(smoothfine)
 image.plot(smoothcoarse); plot(park, add=TRUE)
 image.plot(smoothfine); plot(park, add=TRUE)
 
+# INVERSION FOR RETENTION PROBABILITY
+p <- (1/smoothfine$z)
+p <- ifelse(p==Inf, 1, p)
+smoothfine2 <- smoothfine
+smoothfine2$z <- p
+image.plot(smoothfine2)
 
 
 
