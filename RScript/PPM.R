@@ -1,13 +1,12 @@
-#==============================================================================
-# POINT PROCESS MODELLING
-#==============================================================================
+# POINT PROCESS MODELLING======================================================
 
 # LOAD FILES
+	# LOAD-------------------------------------------------------------------------
 load("RData/assaultxy.RData")
 load("RData/region.RData")
 load("RData/park.RData")
 
-# KERNEL SMOOTHING
+	# KERNEL SMOOTHING-------------------------------------------------------------
 poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates the coordinates from the polygon
 library(splancs)
 # eventually do a sensitivity analysis to choose a bandwidth
@@ -15,13 +14,13 @@ smooth <- kernel2d(assaultxy, poly, 1000, 200, 200)
 library(fields)
 image.plot(smooth); plot(park, add=TRUE)
 
-# POINT PROCESS
+	# POINT PROCESS (NOT USED)-----------------------------------------------------
 #library(spatstat)
 #glass <- data.frame(x=rev(poly[,1]), y=rev(poly[,2]))
 #windowpane <- owin(poly=glass)
 #assaultpp <- as.ppp(assaultxy, windowpane)
 
-# CONGLOMERATE Z VALUES
+	# CONGLOMERATE Z VALUES (NOT USED)---------------------------------------------
 #zval <- vector()
 #for (i in 1:100000) {
 #	xcoord <- which(smoothfine$x > assaultxy[i,1])[1]
@@ -30,6 +29,7 @@ image.plot(smooth); plot(park, add=TRUE)
 #}
 
 # CALCULATE RETENTION PROBABILITY
+	# RETENTION PROBABILITY--------------------------------------------------------
 totalassaults <- nrow(assaultxy) # total number of assaults
 library(rgeos)
 chicagoarea <- gArea(region, byid=FALSE) # area of Chicago in sq ft
@@ -43,7 +43,7 @@ for(i in 1:200) {
 	}
 }
 
-# ASSOCIATE EACH CRIME WITH ITS LAMBDA
+	# ASSOCIATE EACH CRIME WITH ITS LAMBDA-----------------------------------------
 lambdacol <- matrix(ncol=1, nrow=nrow(assaultxy)) # temporary column to hold lambda values
 assaultlambda <- cbind(assaultxy, lambdacol) # cbind assaultxy and lambdacol
 colnames(assaultlambda)[3] <- "lambda" # rename lambdacol
@@ -54,18 +54,12 @@ for (i in 1:nrow(assaultlambda)) {
 }
 save(assaultlambda, file="RData/assaultlambda.RData")
 
-# THINNING OF POINT PROCESS
+	# THINNING OF POINT PROCESS (IN PROGRESS)--------------------------------------
 library(spatstat)
 thin <- rthin(assaultpp, retprob)
 plot(thin)
-
 p <- (1/smoothfine$z)
 p <- ifelse(p==Inf, 1, p)
 smoothfine2 <- smoothfine
 smoothfine2$z <- p
 image.plot(smoothfine2)
-
-
-
-
-
