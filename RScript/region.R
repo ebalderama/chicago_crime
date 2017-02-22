@@ -2,6 +2,8 @@
 # DISSOLVE POLYGON
 #==============================================================================
 
+# modified from: https://philmikejones.wordpress.com/2015/09/03/dissolve-polygons-in-r/
+
 # LOAD PACKAGES
 library(rgdal)
 library(rgeos)
