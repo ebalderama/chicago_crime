@@ -1,0 +1,21 @@
+\documentclass{article}
+
+\begin{document}
+
+TITLE
+Modelling the Spatial Influence of Parks on Crime Locations in Chicago
+
+ABSTRACT
+Previous research has indicated that the presence of greenspaces such as parks and vegetation may help reduce the likeliood of crime occurence in surrounding neighborhoods.
+
+Using crime and park data downloaded from the City of Chicago Data Portal, we investigate the spatial relationship between the locations of parks and occurences of various types of crime. 
+
+We describe the distance distribution between a crime location and the nearest park, using spatial point process models. Model parameters are estimated for each park, indicating an attractive or repulsive effect, by which parks are then ranked.
+
+ABSTRACT V2
+Previous research suggests that the presence of greenspaces such as parks and vegetation may help reduce the likelihood of crime occurrence in surrounding neighborhoods. Using crime and park data downloaded from the City of Chicago Data Portal, we investigate the spatial relationship between the locations of parks and the occurrences of various types of crime. We describe the distance distribution between a crime location and the nearest park, using spatial point process models. Model parameters are estimated for each park, indicating an attractive or repulsive effect, by which parks are then ranked.
+
+
+
+
+\end{document}
