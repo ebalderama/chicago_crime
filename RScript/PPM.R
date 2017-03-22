@@ -1,6 +1,5 @@
 # POINT PROCESS MODELLING======================================================
 
-# LOAD FILES
 	# LOAD-------------------------------------------------------------------------
 load("RData/assaultxy.RData")
 load("RData/region.RData")
@@ -28,7 +27,6 @@ image.plot(smooth); plot(park, add=TRUE)
 #	zval[i] <- smoothfine$z[xcoord,ycoord]
 #}
 
-# CALCULATE RETENTION PROBABILITY
 	# RETENTION PROBABILITY--------------------------------------------------------
 totalassaults <- nrow(assaultxy) # total number of assaults
 library(rgeos)

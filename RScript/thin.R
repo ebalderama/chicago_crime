@@ -1,3 +1,5 @@
+# THIN=========================================================================
+	# NOTES------------------------------------------------------------------------
 #Maybe ignore that last email. Here's the other code I use, where first I
 #pass the points that need to get thinned to the thin.c function. And then
 #I pass the function for lambda to the super.f function to do the
@@ -7,7 +9,7 @@
 #"data" for thin.c is just the points that need to be thinned. "data" for
 #super.f are just the points that are automatically kept. Hope this helps.
 
-
+	# THIN.C FUNCTION--------------------------------------------------------------
 thin.c <- function(data, min, fun)
 {
   prob <- min/fun(data[,1], data[,2])
@@ -17,7 +19,7 @@ thin.c <- function(data, min, fun)
   return(thinres)
 }
 
-
+	# SUPER.F FUNCTION-------------------------------------------------------------
 super.f <- function(data, max, fun)
 {
 	temp <- rpoispp(max)
@@ -31,5 +33,3 @@ super.f <- function(data, max, fun)
 	total.pts <- data.frame(rbind(thinres, data))
 	return(total.pts)
 }
-
-

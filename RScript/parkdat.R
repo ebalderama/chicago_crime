@@ -1,8 +1,6 @@
-#==============================================================================
-# MODIFY PARKS DATA
-#==============================================================================
+# MODIFY PARKS DATA============================================================
 
-# READ/TIDY PARKS SHAPEFILES
+	# READ/TIDY PARKS SHAPEFILES---------------------------------------------------
 library(rgdal)
 library(broom)
 library(maptools)
@@ -11,7 +9,7 @@ parkdat <- tidy(park, region="PARK")
 parkpoly <- cbind(parkdat$long, parkdat$lat)
 colnames(parkpoly) <- c("long", "lat")
 
-# SAVE
+	# SAVE-------------------------------------------------------------------------
 save(park, file="RData/park.RData")
 save(parkdat, file="RData/parkdat.RData")
 save(parkpoly, file="RData/parkpoly.RData")
