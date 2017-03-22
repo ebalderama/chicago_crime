@@ -412,8 +412,7 @@
 
 \begin{itemize}
 	\item \textbf{hurdle(...)}
-	\begin{itemize}
-		\item \textbf{y:} numeric response vector.
+	\begin{itemize}\item \textbf{y:} numeric response vector.
 		\item \textbf{x:} optional numeric predictor matrix.
 		\item \textbf{hurdle:} numeric threshold ($\psi$) for `extreme' observations of two-hurdle models. \red{NULL} for one-hurdle models.
 		\item \textbf{dist:} character specification of response distribution.
@@ -585,7 +584,7 @@
 	{\bf Likelihood of observing count $y_{i}$:}
 	%\end{itemize}
 	\beqx
-	f(y_{i} | \blue{\btheta}) = 
+	f(y_{i} \cond \blue{\btheta}) = 
 	\begin{cases}
 		\blue{p_{i}}, &  y_{i}=0,\\
 		{[1-p_{i}] \cdot\NB(\blue{\mu_{i}}, r)}, & 1\le y_{ij} < \psi,\\
@@ -601,7 +600,7 @@
 	{\bf Likelihood of observing count $y_{i}$:}
 	%\end{itemize}
 	\beqx
-	f(y_{i} | \blue{\btheta}) = 
+	f(y_{i} \cond \blue{\btheta}) = 
 	\begin{cases}
 		\blue{p_{i}}, &  y_{i}=0,\\
 		{[1-p_{i}]\cdot [1-q_{i}] \cdot\NB(\blue{\mu_{i}}, r)}, & 1\le y_{ij} < \psi,\\
