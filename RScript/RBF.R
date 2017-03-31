@@ -1,10 +1,28 @@
-# RADIAL BASIS FUNCTION========================================================
-# LOAD-------------------------------------------------------------------------
-library(RSNNS)
+# RADIAL BASIS FUNCTION===============================================================
+
+	# LOAD------------------------------------------------------------------------
+#library(RSNNS)
 library(plotly)
+load("RData/assaultxy.RData")
+load("RData/park.RData")
+summary(park)
+
+	# PLOTS-----------------------------------------------------------------------
+#p <- plot_ly(z = ~volcano) %>% add_surface()
+#kd <- with(MASS::geyser, MASS::kde2d(duration, waiting, n = 50))
+#p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
 
 
-# IDEAS------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+	# IDEAS-------------------------------------------------------------------------------
 
 # Parks may be centers (input layer?), a function (gaussian?) may be the
 # hidden layer, and the crime locations may be the expected output layer
@@ -21,4 +39,4 @@ library(plotly)
 
 
 # Using plotly to 3D hist the data
-# Looking at the hist of distances
+# Looking at the hist of distances from park to crimes
