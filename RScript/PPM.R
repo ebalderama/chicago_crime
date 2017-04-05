@@ -12,6 +12,8 @@ library(splancs)
 
 # could do a sensitivity analysis to choose a bandwidth
 smooth <- kernel2d(assaultxy, poly, 1000, 500, 500)
+smooth <- kernel2d(assaultxy, poly, 5000, 5, 10)
+
 
 # save
 save(smooth, file="RData/smooth.RData")
@@ -19,19 +21,35 @@ save(smooth, file="RData/smooth.RData")
 # plot (optional)
 library(fields)
 image.plot(smooth); plot(region, add=TRUE)
+#image(smooth); plot(region, add=TRUE)
 # image.plot(smooth); plot(park, add=TRUE)
 
-# THRESHOLD ------------------------------------------------------------------
+# UPPER THRESHOLD ------------------------------------------------------------------
 
 # isolate matrix of crime density at each pixel
 zval <- smooth$z
 
 # set threshold for isolating clusters
 # e.g. 0.75 isolates the pixels that have the top 25% of crime densities
-threshold <- quantile(zval, 0.95, na.rm=TRUE)
+threshold <- quantile(zval, .85, na.rm=TRUE)
 
 # make matrix indicating pixels where crime density exceeds threshold
 crimepixels <- zval > threshold
+
+# optional: flips matrix horizontally to match map for visual inspection
+# bool <- apply(bool, 1, rev)
+
+# LOWER THRESHOLD ------------------------------------------------------------------
+
+# isolate matrix of crime density at each pixel
+zval <- smooth$z
+
+# set threshold for isolating clusters
+# e.g. 0.75 isolates the pixels that have the top 25% of crime densities
+threshold <- quantile(zval, .15, na.rm=TRUE)
+
+# make matrix indicating pixels where crime density exceeds threshold
+crimepixels <- zval < threshold
 
 # optional: flips matrix horizontally to match map for visual inspection
 # bool <- apply(bool, 1, rev)
@@ -45,7 +63,7 @@ crimepixels <- zval > threshold
 # gaps=FALSE numbers and counts clumps without skips
 library(raster)
 crimeraster <- raster(crimepixels)
-plot(crimeraster)
+plot((crimeraster))
 hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
 
 # make list that returns indices of each pixel in each hotspot
@@ -54,6 +72,59 @@ hotspotlist <- vector("list", numhotspots)
 for (i in 1:numhotspots){
 	hotspotlist[i] <- list(which(hotspots == i, arr.ind = TRUE))
 }
+
+# FIND DENSITY MODE OF HOTSPOT-------------------------------------------------
+modelocs <- matrix(NA, length(hotspotlist), 2)
+for(i in 1:length(hotspotlist)) {
+	zval <- vector()
+	for(j in 1:nrow(hotspotlist[[i]])){
+		zval[j] <- smooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
+	}
+	thismode <- which.max(zval)
+	modelocs[i,1] <- smooth$x[hotspotlist[[i]][thismode,1]]
+	modelocs[i,2] <- smooth$y[hotspotlist[[i]][thismode,2]]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+# DISTPPOLY--------------------------------------------------------------------
+source("RScript/DIST.R")
+source("RScript/DISTppoly.R")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # POINT PROCESS (NOT USED)----------------------------------------------------
 #library(spatstat)
