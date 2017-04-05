@@ -1,25 +1,59 @@
 # POINT PROCESS MODELLING======================================================
 
-	# LOAD-------------------------------------------------------------------------
+# LOAD-------------------------------------------------------------------------
 load("RData/assaultxy.RData")
 load("RData/region.RData")
 load("RData/park.RData")
 
-	# KERNEL SMOOTHING-------------------------------------------------------------
-poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates the coordinates from the polygon
+# KERNEL SMOOTHING------------------------------------------------------------
+poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates coordinates from polygon
 library(splancs)
 # eventually do a sensitivity analysis to choose a bandwidth
-smooth <- kernel2d(assaultxy, poly, 1000, 200, 200)
+smooth <- kernel2d(assaultxy, poly, 1000, 10, 10)
 library(fields)
-image.plot(smooth); plot(park, add=TRUE)
+image.plot(smooth); plot(region, add=TRUE)
+# image.plot(smooth); plot(park, add=TRUE)
 
-	# POINT PROCESS (NOT USED)-----------------------------------------------------
+# THRESHOLD ------------------------------------------------------------------
+
+# isolate matrix of crime density at each pixel
+zval <- smooth$z
+
+# set threshold for isolating clusters
+# e.g. 0.75 isolates the pixels that have the top 25% of crime densities
+threshold <- quantile(zval, 0.75, na.rm=TRUE)
+
+# make matrix indicating pixels where crime density exceeds threshold
+crimepixels <- zval > threshold
+
+# optional: flips matrix horizontally to match map for visual inspection
+# bool <- apply(bool, 1, rev)
+
+# GROUP ----------------------------------------------------------------------
+# source: http://stackoverflow.com/questions/35772846/obtaining-connected-components-in-r
+
+# pixels that are nearby and exceed the threshold are clumped together
+# each clump represents a hotspot
+# directions=8 includes diagonals, directions=4 does not
+# gaps=FALSE numbers and counts clumps without skips
+library(raster)
+crimeraster <- raster(crimepixels)
+hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
+
+# make list that returns indices of each pixel in each hotspot
+numhotspots <- max(hotspots, na.rm=TRUE)
+hotspotlist <- vector("list", numhotspots)
+for (i in 1:numhotspots){
+	hotspotlist[i] <- list(which(hotspots == i, arr.ind = TRUE))
+}
+
+# POINT PROCESS (NOT USED)----------------------------------------------------
 #library(spatstat)
 #glass <- data.frame(x=rev(poly[,1]), y=rev(poly[,2]))
 #windowpane <- owin(poly=glass)
 #assaultpp <- as.ppp(assaultxy, windowpane)
 
-	# CONGLOMERATE Z VALUES (NOT USED)---------------------------------------------
+# CONGLOMERATE Z VALUES (NOT USED)---------------------------------------------
 #zval <- vector()
 #for (i in 1:100000) {
 #	xcoord <- which(smoothfine$x > assaultxy[i,1])[1]
@@ -27,7 +61,7 @@ image.plot(smooth); plot(park, add=TRUE)
 #	zval[i] <- smoothfine$z[xcoord,ycoord]
 #}
 
-	# RETENTION PROBABILITY--------------------------------------------------------
+# RETENTION PROBABILITY--------------------------------------------------------
 totalassaults <- nrow(assaultxy) # total number of assaults
 library(rgeos)
 chicagoarea <- gArea(region, byid=FALSE) # area of Chicago in sq ft
@@ -41,7 +75,7 @@ for(i in 1:200) {
 	}
 }
 
-	# ASSOCIATE EACH CRIME WITH ITS LAMBDA-----------------------------------------
+# ASSOCIATE EACH CRIME WITH ITS LAMBDA-----------------------------------------
 lambdacol <- matrix(ncol=1, nrow=nrow(assaultxy)) # temporary column to hold lambda values
 assaultlambda <- cbind(assaultxy, lambdacol) # cbind assaultxy and lambdacol
 colnames(assaultlambda)[3] <- "lambda" # rename lambdacol
@@ -52,7 +86,7 @@ for (i in 1:nrow(assaultlambda)) {
 }
 save(assaultlambda, file="RData/assaultlambda.RData")
 
-	# THINNING OF POINT PROCESS (IN PROGRESS)--------------------------------------
+# THINNING OF POINT PROCESS (IN PROGRESS)--------------------------------------
 library(spatstat)
 thin <- rthin(assaultpp, retprob)
 plot(thin)
