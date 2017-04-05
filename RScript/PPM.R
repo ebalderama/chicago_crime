@@ -6,10 +6,17 @@ load("RData/region.RData")
 load("RData/park.RData")
 
 # KERNEL SMOOTHING------------------------------------------------------------
+
 poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates coordinates from polygon
 library(splancs)
-# eventually do a sensitivity analysis to choose a bandwidth
-smooth <- kernel2d(assaultxy, poly, 1000, 10, 10)
+
+# could do a sensitivity analysis to choose a bandwidth
+smooth <- kernel2d(assaultxy, poly, 1000, 500, 500)
+
+# save
+save(smooth, file="RData/smooth.RData")
+
+# plot (optional)
 library(fields)
 image.plot(smooth); plot(region, add=TRUE)
 # image.plot(smooth); plot(park, add=TRUE)
@@ -21,7 +28,7 @@ zval <- smooth$z
 
 # set threshold for isolating clusters
 # e.g. 0.75 isolates the pixels that have the top 25% of crime densities
-threshold <- quantile(zval, 0.75, na.rm=TRUE)
+threshold <- quantile(zval, 0.95, na.rm=TRUE)
 
 # make matrix indicating pixels where crime density exceeds threshold
 crimepixels <- zval > threshold
@@ -38,6 +45,7 @@ crimepixels <- zval > threshold
 # gaps=FALSE numbers and counts clumps without skips
 library(raster)
 crimeraster <- raster(crimepixels)
+plot(crimeraster)
 hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
 
 # make list that returns indices of each pixel in each hotspot
