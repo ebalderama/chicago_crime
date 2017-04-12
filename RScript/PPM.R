@@ -11,7 +11,7 @@ load("RData/parkdat.RData")
 poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates coordinates from polygon
 library(splancs)
 
-# optional sensitivity analysis to choose a bandwidth
+# sensitivity analysis to choose a bandwidth (optional)
 library(MASS)
 bw.nrd(assaultxy[,2])
 
@@ -26,7 +26,7 @@ save(smooth, file="RData/smooth.RData")
 # plot (optional)
 library(fields)
 image.plot(smooth); plot(region, add=TRUE)
-#image(smooth); plot(region, add=TRUE)
+# image(smooth); plot(region, add=TRUE)
 # image.plot(smooth); plot(park, add=TRUE)
 
 # UPPER THRESHOLD ------------------------------------------------------------------
@@ -125,23 +125,33 @@ source("RScript/DISTppoly.R")
 # loop through every park calculating distances to every hotspot
 # DISTppoly should place a vector of distances in each row
 
-# METHOD 1: DISTPPOLY
-# distances <- matrix(NA, 583, 2)
+# DISTPPOLY
 distances <- matrix(data=NA, nrow=length(unique(parkdat$number)), ncol=nrow(centers))
 for (i in 1:nrow(distances)) {
 	distances[i,] <- DISTppoly(pts=as.matrix(centers), poly=as.matrix(parkdat[parkdat$number==i, 1:2]),
 						method="Euclidean")
 }
 
+dim(distances)
 
+for (i in 573:583) {
+	hist(distances[i,], breaks=25) # distribution of distances to crime hotspots for park number i
+}
+# many look bivariate
 
+# MEDIAN DISTANCE--------------------------------------------------------------
+medians <- vector()
+for (i in 1:nrow(distances)) {
+	medians[i] <- median(distances[i, 1:40]) # for each park, take the median of the distances to the hotspots
+}
 
+minimums <- vector()
+for (i in 1:nrow(distances)) {
+	minimums[i] <- minimum(distances[i, 1:40]) # for each park, take the median of the distances to the hotspots
+}
 
-
-
-
-
-
+# set threshold for distance for within and without then count number of hotspots in and out for each park
+# add to poster to see layout
 
 
 
