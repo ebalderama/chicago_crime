@@ -11,9 +11,10 @@ save(assaultdat, file="RDataFiles/assaultdat.RData")
 # READ IN PARKS SHAPEFILES-----------------------------------------------------
 library(rgdal)
 library(broom)
+library(maptools)
 park <- readOGR(dsn="./Shapefiles/Parks_Aug2012", layer="Parks_Aug2012")
 parkdat <- tidy(park, region="PARK")
-parkdat$number <- as.integer(factor(parkdat$id))
+parkdat$parknumber <- as.integer(factor(parkdat$id))
 save(parkdat, file="RData/parkdat.RData")
 
 # MATRIX OF LATITUDES AND LONGITUDES OF ASSAULTS-------------------------------

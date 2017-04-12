@@ -126,37 +126,43 @@ source("RScript/DISTppoly.R")
 # DISTppoly should place a vector of distances in each row
 
 # DISTPPOLY
-distances <- matrix(data=NA, nrow=length(unique(parkdat$number)), ncol=nrow(centers))
+distances <- matrix(data=NA, nrow=length(unique(parkdat$parknumber)), ncol=nrow(centers))
 for (i in 1:nrow(distances)) {
-	distances[i,] <- DISTppoly(pts=as.matrix(centers), poly=as.matrix(parkdat[parkdat$number==i, 1:2]),
+	distances[i,] <- DISTppoly(pts=as.matrix(centers), poly=as.matrix(parkdat[parkdat$parknumber==i, 1:2]),
 						method="Euclidean")
 }
 
-dim(distances)
-
-for (i in 573:583) {
-	hist(distances[i,], breaks=25) # distribution of distances to crime hotspots for park number i
-}
+# for (i in 573:583) {
+#	hist(distances[i,], breaks=25) # distribution of distances to crime hotspots for park number i
+# }
 # many look bivariate
 
-# MEDIAN DISTANCE--------------------------------------------------------------
-medians <- vector()
+# MEDIAN DISTANCE TO HOTSPOT---------------------------------------------------
+# for each park, take the median of the distances to the hotspots
+medians <- data.frame(matrix(data=NA, nrow=nrow(distances), ncol=2))
+medians[,1] <- 1:nrow(distances)
+names(medians) <- c("parknumber", "medspotdist")
 for (i in 1:nrow(distances)) {
-	medians[i] <- median(distances[i, 1:40]) # for each park, take the median of the distances to the hotspots
+	medians[i,2] <- median(distances[i,]) 
 }
-
-minimums <- vector()
-for (i in 1:nrow(distances)) {
-	minimums[i] <- minimum(distances[i, 1:40]) # for each park, take the median of the distances to the hotspots
-}
+medians <- medians[order(medians[,2], decreasing=FALSE),] # order parks from closest median distance to hotspot to furthest
 
 # set threshold for distance for within and without then count number of hotspots in and out for each park
 # add to poster to see layout
 
+# NEARBY HOTSPOTS--------------------------------------------------------------
+# for each park, how many hotspots are within a 5 mile radius
+numnearspots <- data.frame(matrix(data=NA, nrow=nrow(distances), ncol=2))
+numnearspots[,1] <- 1:nrow(distances)
+names(numnearspots) <- c("parknumber", "numnearspots")
+radius <- 26400 # 5 mile radius
+for (i in 1:nrow(distances)) {
+	numnearspots[i,2] <- sum(distances[i,] < radius)
+}
+numnearspots <- numnearspots[order(numnearspots[,2], decreasing=TRUE),] # order parks from largest number of nearby hotspots to least
 
-
-
-
+parkdat <- merge(parkdat, numnearspots, by="parknumber")
+parkdat <- merge(parkdat, medians, by="parknumber")
 
 
 
