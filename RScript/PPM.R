@@ -4,15 +4,20 @@
 load("RData/assaultxy.RData")
 load("RData/region.RData")
 load("RData/park.RData")
+load("RData/parkdat.RData")
 
 # KERNEL SMOOTHING------------------------------------------------------------
 
 poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates coordinates from polygon
 library(splancs)
 
-# could do a sensitivity analysis to choose a bandwidth
-smooth <- kernel2d(assaultxy, poly, 1000, 500, 500)
-smooth <- kernel2d(assaultxy, poly, 5000, 5, 10)
+# optional sensitivity analysis to choose a bandwidth
+library(MASS)
+bw.nrd(assaultxy[,2])
+
+# smoothing
+smooth <- kernel2d(assaultxy, poly, 1320, 500, 500) # hi res
+# smooth <- kernel2d(assaultxy, poly, 5000, 5, 10) # lo res
 
 
 # save
@@ -29,9 +34,9 @@ image.plot(smooth); plot(region, add=TRUE)
 # isolate matrix of crime density at each pixel
 zval <- smooth$z
 
-# set threshold for isolating clusters
+# set upper threshold for isolating clusters
 # e.g. 0.75 isolates the pixels that have the top 25% of crime densities
-threshold <- quantile(zval, .85, na.rm=TRUE)
+threshold <- quantile(zval[zval>0], .95, na.rm=TRUE)
 
 # make matrix indicating pixels where crime density exceeds threshold
 crimepixels <- zval > threshold
@@ -44,11 +49,11 @@ crimepixels <- zval > threshold
 # isolate matrix of crime density at each pixel
 zval <- smooth$z
 
-# set threshold for isolating clusters
-# e.g. 0.75 isolates the pixels that have the top 25% of crime densities
+# set lower threshold for isolating clusters
+# e.g. .15 isolates the pixels that have the bottom 15% of crime densities
 threshold <- quantile(zval, .15, na.rm=TRUE)
 
-# make matrix indicating pixels where crime density exceeds threshold
+# make matrix indicating pixels where crime density is below threshold
 crimepixels <- zval < threshold
 
 # optional: flips matrix horizontally to match map for visual inspection
@@ -74,15 +79,58 @@ for (i in 1:numhotspots){
 }
 
 # FIND DENSITY MODE OF HOTSPOT-------------------------------------------------
-modelocs <- matrix(NA, length(hotspotlist), 2)
+centers <- matrix(NA, length(hotspotlist), 2)
 for(i in 1:length(hotspotlist)) {
 	zval <- vector()
 	for(j in 1:nrow(hotspotlist[[i]])){
 		zval[j] <- smooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
 	}
 	thismode <- which.max(zval)
-	modelocs[i,1] <- smooth$x[hotspotlist[[i]][thismode,1]]
-	modelocs[i,2] <- smooth$y[hotspotlist[[i]][thismode,2]]
+	centers[i,1] <- smooth$x[hotspotlist[[i]][thismode,1]]
+	centers[i,2] <- smooth$y[hotspotlist[[i]][thismode,2]]
+}
+centers <- data.frame(centers)
+names(centers) <- c("x", "y")
+
+# PLOTTING---------------------------------------------------------------------
+# build kde data frame to pass to ggmap
+# don't use the raster object of the hotspots for visualization
+# instead, use ggmap to directly isolate hotspots from the kde
+smoothgrid <- expand.grid(smooth$x, smooth$y)
+densvec <- c(smooth$z)
+smoothgrid <- data.frame(smoothgrid, densvec)
+names(smoothgrid) <- c("x", "y", "z")
+
+library(ggmap)
+regionsp <- spTransform(region, CRS("+proj=longlat +datum=WGS84"))
+chitown <- get_map(center="Chicago",
+		   scale=2,
+		   zoom=10,
+		   maptype="terrain",
+		   source="google")
+chimap <- ggmap(chitown, extent="panel") + 
+	geom_polygon(aes(x=long, y=lat, group=group),
+		     fill="grey",
+		     size=0.5,
+		     color="black",
+		     data=regionsp,
+		     alpha=0)
+chimap
+
+# DISTANCE FROM HOTSPOT TO PARK------------------------------------------------
+source("RScript/DIST.R")
+source("RScript/DISTppoly.R")
+# each park is a row and each hotspot is a column
+# distancematrix <- matrix(data=NA, nrow=length(unique(parkdat$number)), ncol=nrow(centers))
+# loop through every park calculating distances to every hotspot
+# DISTppoly should place a vector of distances in each row
+
+# METHOD 1: DISTPPOLY
+# distances <- matrix(NA, 583, 2)
+distances <- matrix(data=NA, nrow=length(unique(parkdat$number)), ncol=nrow(centers))
+for (i in 1:nrow(distances)) {
+	distances[i,] <- DISTppoly(pts=as.matrix(centers), poly=as.matrix(parkdat[parkdat$number==i, 1:2]),
+						method="Euclidean")
 }
 
 
@@ -96,9 +144,6 @@ for(i in 1:length(hotspotlist)) {
 
 
 
-# DISTPPOLY--------------------------------------------------------------------
-source("RScript/DIST.R")
-source("RScript/DISTppoly.R")
 
 
 
@@ -106,26 +151,7 @@ source("RScript/DISTppoly.R")
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# NOT USED=====================================================================
 # POINT PROCESS (NOT USED)----------------------------------------------------
 #library(spatstat)
 #glass <- data.frame(x=rev(poly[,1]), y=rev(poly[,2]))
