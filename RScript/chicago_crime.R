@@ -111,7 +111,7 @@
 		# crimepixels <- zval > threshold
 		
 		# EIGHTH MILE
-		eighthzval <- c(eighthsmooth$z)
+		eighthzval <- eighthsmooth$z
 		eighththreshold <- quantile(eighthzval[eighthzval>0], .95, na.rm=TRUE)
 		eighthpixels <- eighthzval > eighththreshold
 		
@@ -121,12 +121,12 @@
 		quarterpixels <- quarterzval > quarterthreshold
 		
 		# HALF MILE
-		halfzval <- c(halfsmooth$z)
+		halfzval <- halfsmooth$z
 		halfthreshold <- quantile(halfzval[halfzval>0], .95, na.rm=TRUE)
 		halfpixels <- halfzval > halfthreshold
 		
 		# WHOLE MILE
-		wholezval <- c(wholesmooth$z)
+		wholezval <- wholesmooth$z
 		wholethreshold <- quantile(wholezval[wholezval>0], .95, na.rm=TRUE)
 		wholepixels <- wholezval > wholethreshold
 
@@ -264,15 +264,15 @@
 		m2 <- apply(distances,1,median)
 		m3 <- apply(distances,1,max)
 		
-
-		df <- data.frame(min=m1[order(m1, decreasing = TRUE)], 
-				 med=m2[order(m1, decreasing = TRUE)], 
-				 max=m3[order(m1, decreasing = TRUE)])
-
-				
-		df$park.order <- factor(park$PARK, levels = park$PARK[order(df$min)])
+		df <- data.frame(min=m1, 
+				 med=m2, 
+				 max=m3)
+		
+		df$park.order <- factor(unique(parkdat$id), levels = unique(parkdat$id)[order(df$min)])
+		
 		ggplot(aes(park.order,med), data=df) +
-			geom_pointrange(aes(ymin=min,ymax=max))
+			geom_pointrange(aes(ymin=min,ymax=max)) + 
+			theme(axis.text.x = element_text(angle = 60, hjust=1))
 		
 		
 		
