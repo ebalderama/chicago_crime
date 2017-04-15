@@ -8,7 +8,7 @@
 	save(park, file="RData/park.RData")
 	parkdat <- tidy(park, region="PARK")
 	parkdat$parknumber <- as.integer(factor(parkdat$id))
-	save(parkdat, file="RData/parkdat.RData")
+	# save(parkdat, file="RData/parkdat.RData")
 
 	# CRIME DATA PROJECTION========================================================
 	load("RData/violentdat.RData")
@@ -20,7 +20,7 @@
 	library(sp)
 	violentmerc <- spTransform(violentsp, CRS(proj4string(park)))
 	violentxy <- coordinates(violentmerc)
-	save(violentxy, file="RData/violentxy.RData")
+	# save(violentxy, file="RData/violentxy.RData")
 
 	# REGION POLYGON=============================================
 	# modified from: https://philmikejones.wordpress.com/2015/09/03/dissolve-polygons-in-r/
@@ -67,6 +67,7 @@
 		library(splancs)
 		library(fields)
 		# perform with 1/8 1/4 1/2 1 mile (660, 1320, 2640, 5280 feet) bandwidths
+		load(file="RData/violentxy.RData")
 		
 		# EIGHTH MILE
 		eighthsmooth <- kernel2d(violentxy, poly, 660, 2000, 2000)
@@ -110,22 +111,22 @@
 		# crimepixels <- zval > threshold
 		
 		# EIGHTH MILE
-		eighthzval <- eighthsmooth$z
+		eighthzval <- c(eighthsmooth$z)
 		eighththreshold <- quantile(eighthzval[eighthzval>0], .95, na.rm=TRUE)
 		eighthpixels <- eighthzval > eighththreshold
 		
 		# QUARTER MILE
-		quarterzval <- quartersmooth$z
+		quarterzval <- c(quartersmooth$z)
 		quarterthreshold <- quantile(quarterzval[quarterzval>0], .95, na.rm=TRUE)
 		quarterpixels <- quarterzval > quarterthreshold
 		
 		# HALF MILE
-		halfzval <- halfsmooth$z
+		halfzval <- c(halfsmooth$z)
 		halfthreshold <- quantile(halfzval[halfzval>0], .95, na.rm=TRUE)
 		halfpixels <- halfzval > halfthreshold
 		
 		# WHOLE MILE
-		wholezval <- wholesmooth$z
+		wholezval <- c(wholesmooth$z)
 		wholethreshold <- quantile(wholezval[wholezval>0], .95, na.rm=TRUE)
 		wholepixels <- wholezval > wholethreshold
 
@@ -214,7 +215,7 @@
 						   method="Euclidean")
 		}
 
-		# MINIMUM DISTANCE TO HOTSPOT--------------------------------------------------
+		# MINIMUM DISTANCE TO HOTSPOT------------------------------------------------
 		mymins <- data.frame(parknumber=1:nrow(distances))
 		mymins$mins <- apply(distances, 1, min)
 		mymins <- mymins[order(mymins[,2], decreasing=FALSE),] # order parks from closest minimum distance to hotspot to furthest
@@ -224,9 +225,39 @@
 		parkmins$mins <- (parkmins$mins/5280)
 		
 		# PLOTTING GRAPHS OF PARKS---------------------------------------------------
+		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
+		quarterzval <- c(quartersmooth$z)
+		quarterframe <- data.frame(expand.grid(quartersmooth$x, quartersmooth$y))
+		names(quarterframe) <- c("x", "y")
+		quarterframe$z <- quarterzval
+		quarterframe$hotspot <- ifelse(quarterframe$z > quarterthreshold, TRUE, FALSE)
+		library(broom)
+		library(ggplot2)
+		ggplot() +
+			geom_raster(aes(x, y),
+				    fill="gray",
+				    data=subset(quarterframe, !quarterframe$hotspot)) +
+			geom_polygon(aes(long, lat, group=group),
+				     fill="green",
+				     colour=1,
+				     size=.01,
+				     data=parkdat) +
+			geom_raster(aes(x, y),
+				    fill="red",
+				    alpha=.3,
+				    data=subset(quarterframe, quarterframe$hotspot)) +
+			labs(x="", y="") +
+			theme(legend.position="none",
+			      axis.text=element_blank(),
+			      panel.background=element_blank(),
+			      axis.ticks=element_blank())
+			
 		
 		
 		
+		#ggsave("Graphics/")
+		
+	
 		
 		
 		
