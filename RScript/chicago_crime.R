@@ -78,12 +78,12 @@
 		dev.off()
 		
 		# QUARTER MILE
-		quartersmooth <- kernel2d(violentxy, poly, 1320, 2000, 2000)
-		png(file="Graphics/quartersmooth.png", width=2000, height=2000)
+		quartersmooth <- kernel2d(violentxy, poly, 1320, 200, 200)
+		#png(file="Graphics/quartersmooth.png", width=2000, height=2000)
 		image(quartersmooth, col=tim.colors(), axes=FALSE, bty="n")
 		plot(region, add=TRUE, lwd=10)
 		box(which="plot", lty="solid", lwd=10)
-		dev.off()
+		#dev.off()
 		
 		# QUARTER MILE LO RES
 		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
@@ -231,11 +231,44 @@
 		parkmins <- unique(parksort[,c(1,8,9)])
 		parkmins$mins <- (parkmins$mins/5280)
 		
+<<<<<<< HEAD
 		# LINE PLOT OF PARKS---------------------------------------------------------
 		distframe <- data.frame(park=1:583,
 					min=apply(distances,1,min),
 					max=apply(distances,1,max),
 					median=apply(distances,1,median))
+=======
+		# PLOTTING GRAPHS OF PARKS---------------------------------------------------
+		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
+		quarterzval <- c(quartersmooth$z)
+		quarterframe <- data.frame(expand.grid(quartersmooth$x, quartersmooth$y))
+		names(quarterframe) <- c("x", "y")
+		quarterframe$z <- quarterzval
+		quarterframe$hotspot <- ifelse(quarterframe$z > quarterthreshold, TRUE, FALSE)
+		library(broom)
+		library(ggplot2)
+		ggplot() +
+			geom_raster(aes(x, y),
+				    fill="grey90", 
+				    data=subset(quarterframe, !quarterframe$hotspot)) +
+			geom_polygon(aes(long, lat, group=group),
+				     fill="springgreen3",
+				     colour=1,
+				     size=.02,
+				     data=parkdat) +
+			geom_raster(aes(x, y),
+				    fill="red",
+				    alpha=.5,
+				    data=subset(quarterframe, quarterframe$hotspot)) +
+			labs(x="", y="") +
+			theme(legend.position="none",
+			      axis.text=element_blank(),
+			      panel.background=element_blank(),
+			      axis.ticks=element_blank())
+			
+		
+		
+>>>>>>> 7515dd844572b5c69e9c6207bb27a6e1e798668a
 		
 		distframe <- data.frame()
 		distframe <- t(distances)
@@ -246,11 +279,25 @@
 		distmelt <- melt(t(distances))
 		boxplot(distmelt$value)
 		
+<<<<<<< HEAD
 		p <- ggplot(distframe, aes(park, median))
 		p + geom_pointrange(aes(ymin=min, ymax=max),
 				    data=distframe)
+=======
+		m1 <- apply(distances,1,min)
+		m2 <- apply(distances,1,median)
+		m3 <- apply(distances,1,max)
+>>>>>>> 7515dd844572b5c69e9c6207bb27a6e1e798668a
 		
-		
+
+		df <- data.frame(min=m1[order(m1, decreasing = TRUE)], 
+				 med=m2[order(m1, decreasing = TRUE)], 
+				 max=m3[order(m1, decreasing = TRUE)])
+
+				
+		df$park.order <- factor(park$PARK, levels = park$PARK[order(df$min)])
+		ggplot(aes(park.order,med), data=df) +
+			geom_pointrange(aes(ymin=min,ymax=max))
 		
 		
 		
