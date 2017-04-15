@@ -77,12 +77,12 @@
 		dev.off()
 		
 		# QUARTER MILE
-		quartersmooth <- kernel2d(violentxy, poly, 1320, 2000, 2000)
-		png(file="Graphics/quartersmooth.png", width=2000, height=2000)
+		quartersmooth <- kernel2d(violentxy, poly, 1320, 200, 200)
+		#png(file="Graphics/quartersmooth.png", width=2000, height=2000)
 		image(quartersmooth, col=tim.colors(), axes=FALSE, bty="n")
 		plot(region, add=TRUE, lwd=10)
 		box(which="plot", lty="solid", lwd=10)
-		dev.off()
+		#dev.off()
 		
 		# HALF MILE
 		halfsmooth <- kernel2d(violentxy, poly, 2640, 2000, 2000)
