@@ -85,6 +85,9 @@
 		box(which="plot", lty="solid", lwd=10)
 		dev.off()
 		
+		# QUARTER MILE LO RES
+		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
+		
 		# HALF MILE
 		halfsmooth <- kernel2d(violentxy, poly, 2640, 2000, 2000)
 		png(file="Graphics/halfsmooth.png", width=2000, height=2000)
@@ -111,22 +114,22 @@
 		# crimepixels <- zval > threshold
 		
 		# EIGHTH MILE
-		eighthzval <- c(eighthsmooth$z)
+		eighthzval <- eighthsmooth$z
 		eighththreshold <- quantile(eighthzval[eighthzval>0], .95, na.rm=TRUE)
 		eighthpixels <- eighthzval > eighththreshold
 		
 		# QUARTER MILE
-		quarterzval <- c(quartersmooth$z)
+		quarterzval <- quartersmooth$z
 		quarterthreshold <- quantile(quarterzval[quarterzval>0], .95, na.rm=TRUE)
 		quarterpixels <- quarterzval > quarterthreshold
 		
 		# HALF MILE
-		halfzval <- c(halfsmooth$z)
+		halfzval <- halfsmooth$z
 		halfthreshold <- quantile(halfzval[halfzval>0], .95, na.rm=TRUE)
 		halfpixels <- halfzval > halfthreshold
 		
 		# WHOLE MILE
-		wholezval <- c(wholesmooth$z)
+		wholezval <- wholesmooth$z
 		wholethreshold <- quantile(wholezval[wholezval>0], .95, na.rm=TRUE)
 		wholepixels <- wholezval > wholethreshold
 
@@ -149,6 +152,9 @@
 		      axes=FALSE, xlab="", ylab="", bty="n")
 		box(which = "plot", lty = "solid", lwd=10)
 		dev.off()
+		
+		# QUARTER MILE LO RES
+		quarterraster <- raster(quarterpixels)
 		
 		# QUARTER MILE
 		quarterraster <- raster(quarterpixels)
@@ -178,7 +184,7 @@
 		# image(t(flip(x, 2)))
 		# plotRGB(t(flip(x, 1)))
 		# plotRGB(t(flip(x, 2)))
-		hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
+		hotspots <- as.matrix(clump(quarterraster, directions=8, gaps=FALSE))
 		# make list that returns indices of each pixel in each hotspot
 		numhotspots <- max(hotspots, na.rm=TRUE)
 		hotspotlist <- vector("list", numhotspots)
@@ -191,11 +197,11 @@
 		for(i in 1:length(hotspotlist)) {
 			zval <- vector()
 			for(j in 1:nrow(hotspotlist[[i]])){
-				zval[j] <- smooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
+				zval[j] <- quartersmooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
 			}
 			thismode <- which.max(zval)
-			centers[i,1] <- smooth$x[hotspotlist[[i]][thismode,1]]
-			centers[i,2] <- smooth$y[hotspotlist[[i]][thismode,2]]
+			centers[i,1] <- quartersmooth$x[hotspotlist[[i]][thismode,1]]
+			centers[i,2] <- quartersmooth$y[hotspotlist[[i]][thismode,2]]
 		}
 		centers <- data.frame(centers)
 		names(centers) <- c("x", "y")
@@ -218,47 +224,31 @@
 		# MINIMUM DISTANCE TO HOTSPOT------------------------------------------------
 		mymins <- data.frame(parknumber=1:nrow(distances))
 		mymins$mins <- apply(distances, 1, min)
-		mymins <- mymins[order(mymins[,2], decreasing=FALSE),] # order parks from closest minimum distance to hotspot to furthest
+		# order parks from closest minimum distance to hotspot to furthest
+		mymins <- mymins[order(mymins[,2], decreasing=FALSE),]
 		parkdat <- merge(parkdat, mymins, by="parknumber")
 		parksort <- parkdat[order(parkdat[,9], decreasing=TRUE),]
 		parkmins <- unique(parksort[,c(1,8,9)])
 		parkmins$mins <- (parkmins$mins/5280)
 		
-		# PLOTTING GRAPHS OF PARKS---------------------------------------------------
-		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
-		quarterzval <- c(quartersmooth$z)
-		quarterframe <- data.frame(expand.grid(quartersmooth$x, quartersmooth$y))
-		names(quarterframe) <- c("x", "y")
-		quarterframe$z <- quarterzval
-		quarterframe$hotspot <- ifelse(quarterframe$z > quarterthreshold, TRUE, FALSE)
-		library(broom)
-		library(ggplot2)
-		ggplot() +
-			geom_raster(aes(x, y),
-				    fill="gray",
-				    data=subset(quarterframe, !quarterframe$hotspot)) +
-			geom_polygon(aes(long, lat, group=group),
-				     fill="green",
-				     colour=1,
-				     size=.01,
-				     data=parkdat) +
-			geom_raster(aes(x, y),
-				    fill="red",
-				    alpha=.3,
-				    data=subset(quarterframe, quarterframe$hotspot)) +
-			labs(x="", y="") +
-			theme(legend.position="none",
-			      axis.text=element_blank(),
-			      panel.background=element_blank(),
-			      axis.ticks=element_blank())
-			
+		# LINE PLOT OF PARKS---------------------------------------------------------
+		distframe <- data.frame(park=1:583,
+					min=apply(distances,1,min),
+					max=apply(distances,1,max),
+					median=apply(distances,1,median))
+		
+		distframe <- data.frame()
+		distframe <- t(distances)
+		names(distframe) <- c(1:583)
 		
 		
+		library(reshape2)
+		distmelt <- melt(t(distances))
+		boxplot(distmelt$value)
 		
-		#ggsave("Graphics/")
-		
-	
-		
+		p <- ggplot(distframe, aes(park, median))
+		p + geom_pointrange(aes(ymin=min, ymax=max),
+				    data=distframe)
 		
 		
 		
