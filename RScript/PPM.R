@@ -9,19 +9,20 @@ load("RData/parkdat.RData")
 # KERNEL SMOOTHING------------------------------------------------------------
 
 poly <- region@polygons[[1]]@Polygons[[3]]@coords # isolates coordinates from polygon
-library(splancs)
 
 # sensitivity analysis to choose a bandwidth (optional)
-library(MASS)
-bw.nrd(assaultxy[,2])
+#library(MASS)
+#bw.nrd(assaultxy[,2])
 
 # smoothing
-smooth <- kernel2d(assaultxy, poly, 1320, 500, 500) # hi res
+library(splancs)
+smooth <- kernel2d(assaultxy, poly, 5280, 500, 500) # hi res
 # smooth <- kernel2d(assaultxy, poly, 5000, 5, 10) # lo res
-
+# 1/8 1/4 1/2 1 mile bandwidths, same threshold
+# 660, 1320, 2640, 5280 feet
 
 # save
-save(smooth, file="RData/smooth.RData")
+#save(smooth, file="RData/smooth.RData")
 
 # plot (optional)
 library(fields)
@@ -44,21 +45,6 @@ crimepixels <- zval > threshold
 # optional: flips matrix horizontally to match map for visual inspection
 # bool <- apply(bool, 1, rev)
 
-# LOWER THRESHOLD ------------------------------------------------------------------
-
-# isolate matrix of crime density at each pixel
-zval <- smooth$z
-
-# set lower threshold for isolating clusters
-# e.g. .15 isolates the pixels that have the bottom 15% of crime densities
-threshold <- quantile(zval, .15, na.rm=TRUE)
-
-# make matrix indicating pixels where crime density is below threshold
-crimepixels <- zval < threshold
-
-# optional: flips matrix horizontally to match map for visual inspection
-# bool <- apply(bool, 1, rev)
-
 # GROUP ----------------------------------------------------------------------
 # source: http://stackoverflow.com/questions/35772846/obtaining-connected-components-in-r
 
@@ -68,7 +54,7 @@ crimepixels <- zval < threshold
 # gaps=FALSE numbers and counts clumps without skips
 library(raster)
 crimeraster <- raster(crimepixels)
-plot((crimeraster))
+plot(crimeraster)
 hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
 
 # make list that returns indices of each pixel in each hotspot
@@ -92,32 +78,7 @@ for(i in 1:length(hotspotlist)) {
 centers <- data.frame(centers)
 names(centers) <- c("x", "y")
 
-# PLOTTING---------------------------------------------------------------------
-# build kde data frame to pass to ggmap
-# don't use the raster object of the hotspots for visualization
-# instead, use ggmap to directly isolate hotspots from the kde
-smoothgrid <- expand.grid(smooth$x, smooth$y)
-densvec <- c(smooth$z)
-smoothgrid <- data.frame(smoothgrid, densvec)
-names(smoothgrid) <- c("x", "y", "z")
-
-library(ggmap)
-regionsp <- spTransform(region, CRS("+proj=longlat +datum=WGS84"))
-chitown <- get_map(center="Chicago",
-		   scale=2,
-		   zoom=10,
-		   maptype="terrain",
-		   source="google")
-chimap <- ggmap(chitown, extent="panel") + 
-	geom_polygon(aes(x=long, y=lat, group=group),
-		     fill="grey",
-		     size=0.5,
-		     color="black",
-		     data=regionsp,
-		     alpha=0)
-chimap
-
-# DISTANCE FROM HOTSPOT TO PARK------------------------------------------------
+# DISTANCE FROM PARK TO HOTSPOTS-----------------------------------------------
 source("RScript/DIST.R")
 source("RScript/DISTppoly.R")
 # each park is a row and each hotspot is a column
@@ -132,25 +93,15 @@ for (i in 1:nrow(distances)) {
 						method="Euclidean")
 }
 
-# for (i in 573:583) {
-#	hist(distances[i,], breaks=25) # distribution of distances to crime hotspots for park number i
-# }
-# many look bivariate
-
-# MEDIAN DISTANCE TO HOTSPOT---------------------------------------------------
+# MINIMUM DISTANCE TO HOTSPOT--------------------------------------------------
 # for each park, take the median of the distances to the hotspots
-medians <- data.frame(matrix(data=NA, nrow=nrow(distances), ncol=2))
-medians[,1] <- 1:nrow(distances)
-names(medians) <- c("parknumber", "medspotdist")
-for (i in 1:nrow(distances)) {
-	medians[i,2] <- median(distances[i,]) 
-}
-medians <- medians[order(medians[,2], decreasing=FALSE),] # order parks from closest median distance to hotspot to furthest
+mymins <- data.frame(parknumber=1:nrow(distances))
+mymins$mins <- apply(distances, 1, min)
+mymins <- mymins[order(mymins[,2], decreasing=FALSE),] # order parks from closest minimum distance to hotspot to furthest
 
-# set threshold for distance for within and without then count number of hotspots in and out for each park
-# add to poster to see layout
+# assaults, homicides, criminal sexual assault, battery, robbery
 
-# NEARBY HOTSPOTS--------------------------------------------------------------
+# NEARBY HOTSPOTS (NOT USED)---------------------------------------------------
 # for each park, how many hotspots are within a 5 mile radius
 numnearspots <- data.frame(matrix(data=NA, nrow=nrow(distances), ncol=2))
 numnearspots[,1] <- 1:nrow(distances)
@@ -189,3 +140,43 @@ parkdat <- merge(parkdat, medians, by="parknumber")
 
 
 
+
+# PLOTTING (NOT USED)----------------------------------------------------------
+# build kde data frame to pass to ggmap
+# don't use the raster object of the hotspots for visualization
+# instead, use ggmap to directly isolate hotspots from the kde
+smoothgrid <- expand.grid(smooth$x, smooth$y)
+densvec <- c(smooth$z)
+smoothgrid <- data.frame(smoothgrid, densvec)
+names(smoothgrid) <- c("x", "y", "z")
+
+library(ggmap)
+regionsp <- spTransform(region, CRS("+proj=longlat +datum=WGS84"))
+chitown <- get_map(center="Chicago",
+		   scale=2,
+		   zoom=10,
+		   maptype="terrain",
+		   source="google")
+chimap <- ggmap(chitown, extent="panel") + 
+	geom_polygon(aes(x=long, y=lat, group=group),
+		     fill="grey",
+		     size=0.5,
+		     color="black",
+		     data=regionsp,
+		     alpha=0)
+chimap
+
+# LOWER THRESHOLD (NOT USED)---------------------------------------------------
+
+# isolate matrix of crime density at each pixel
+zval <- smooth$z
+
+# set lower threshold for isolating clusters
+# e.g. .15 isolates the pixels that have the bottom 15% of crime densities
+threshold <- quantile(zval, .15, na.rm=TRUE)
+
+# make matrix indicating pixels where crime density is below threshold
+crimepixels <- zval < threshold
+
+# optional: flips matrix horizontally to match map for visual inspection
+# bool <- apply(bool, 1, rev)
