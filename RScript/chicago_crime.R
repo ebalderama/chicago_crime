@@ -116,7 +116,7 @@
 		eighthpixels <- eighthzval > eighththreshold
 		
 		# QUARTER MILE
-		quarterzval <- c(quartersmooth$z)
+		quarterzval <- quartersmooth$z
 		quarterthreshold <- quantile(quarterzval[quarterzval>0], .95, na.rm=TRUE)
 		quarterpixels <- quarterzval > quarterthreshold
 		
@@ -178,7 +178,7 @@
 		# image(t(flip(x, 2)))
 		# plotRGB(t(flip(x, 1)))
 		# plotRGB(t(flip(x, 2)))
-		hotspots <- as.matrix(clump(crimeraster, directions=8, gaps=FALSE))
+		hotspots <- as.matrix(clump(quarterraster, directions=8, gaps=FALSE))
 		# make list that returns indices of each pixel in each hotspot
 		numhotspots <- max(hotspots, na.rm=TRUE)
 		hotspotlist <- vector("list", numhotspots)
@@ -191,11 +191,11 @@
 		for(i in 1:length(hotspotlist)) {
 			zval <- vector()
 			for(j in 1:nrow(hotspotlist[[i]])){
-				zval[j] <- smooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
+				zval[j] <- quartersmooth$z[hotspotlist[[i]][j,1], hotspotlist[[i]][j,2]]
 			}
 			thismode <- which.max(zval)
-			centers[i,1] <- smooth$x[hotspotlist[[i]][thismode,1]]
-			centers[i,2] <- smooth$y[hotspotlist[[i]][thismode,2]]
+			centers[i,1] <- quartersmooth$x[hotspotlist[[i]][thismode,1]]
+			centers[i,2] <- quartersmooth$y[hotspotlist[[i]][thismode,2]]
 		}
 		centers <- data.frame(centers)
 		names(centers) <- c("x", "y")
@@ -235,16 +235,16 @@
 		library(ggplot2)
 		ggplot() +
 			geom_raster(aes(x, y),
-				    fill="gray",
+				    fill="grey90", 
 				    data=subset(quarterframe, !quarterframe$hotspot)) +
 			geom_polygon(aes(long, lat, group=group),
-				     fill="green",
+				     fill="springgreen3",
 				     colour=1,
-				     size=.01,
+				     size=.02,
 				     data=parkdat) +
 			geom_raster(aes(x, y),
 				    fill="red",
-				    alpha=.3,
+				    alpha=.5,
 				    data=subset(quarterframe, quarterframe$hotspot)) +
 			labs(x="", y="") +
 			theme(legend.position="none",
@@ -260,8 +260,19 @@
 	
 		
 		
+		m1 <- apply(distances,1,min)
+		m2 <- apply(distances,1,median)
+		m3 <- apply(distances,1,max)
 		
-		
+
+		df <- data.frame(min=m1[order(m1, decreasing = TRUE)], 
+				 med=m2[order(m1, decreasing = TRUE)], 
+				 max=m3[order(m1, decreasing = TRUE)])
+
+				
+		df$park.order <- factor(park$PARK, levels = park$PARK[order(df$min)])
+		ggplot(aes(park.order,med), data=df) +
+			geom_pointrange(aes(ymin=min,ymax=max))
 		
 		
 		
