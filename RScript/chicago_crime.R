@@ -260,19 +260,30 @@
 	
 		
 		
-		m1 <- apply(distances,1,min)
-		m2 <- apply(distances,1,median)
-		m3 <- apply(distances,1,max)
+		m1 <- apply(distances,1,min)/5280
+		m2 <- apply(distances,1,median)/5280
+		m3 <- apply(distances,1,max)/5280
+		
+		#m1[sort(m1)[50]<m1 & m1<sort(m1, decreasing = T)[50]] <- NA
+		grouping <- ifelse(m1<sort(m1)[51], "a", ifelse(m1>sort(m1, decreasing = T)[51], "c", "b"))
 		
 		df <- data.frame(min=m1, 
 				 med=m2, 
-				 max=m3)
+				 max=m3,
+				 group=grouping)
 		
 		df$park.order <- factor(unique(parkdat$id), levels = unique(parkdat$id)[order(df$min)])
 		
 		ggplot(aes(park.order,med), data=df) +
-			geom_pointrange(aes(ymin=min,ymax=max)) + 
+			geom_errorbarh(aes(ymin=min,ymax=max)) + 
 			theme(axis.text.x = element_text(angle = 60, hjust=1))
+		
+		ggplot() +
+			facet_grid(.~group, drop = T) +
+			geom_point(aes(x=min, y=park.order), size=.5, data = df) + 
+			geom_line(aes(x=min, y=as.numeric(park.order)), data = df) +
+			theme(axis.text.y = element_text(size = 2),
+			      axis.title = element_blank())
 		
 		
 		
