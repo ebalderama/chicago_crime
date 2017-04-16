@@ -85,9 +85,6 @@
 		box(which="plot", lty="solid", lwd=10)
 		#dev.off()
 		
-		# QUARTER MILE LO RES
-		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
-		
 		# HALF MILE
 		halfsmooth <- kernel2d(violentxy, poly, 2640, 2000, 2000)
 		png(file="Graphics/halfsmooth.png", width=2000, height=2000)
@@ -152,9 +149,6 @@
 		      axes=FALSE, xlab="", ylab="", bty="n")
 		box(which = "plot", lty = "solid", lwd=10)
 		dev.off()
-		
-		# QUARTER MILE LO RES
-		quarterraster <- raster(quarterpixels)
 		
 		# QUARTER MILE
 		quarterraster <- raster(quarterpixels)
@@ -224,19 +218,12 @@
 		# MINIMUM DISTANCE TO HOTSPOT------------------------------------------------
 		mymins <- data.frame(parknumber=1:nrow(distances))
 		mymins$mins <- apply(distances, 1, min)
-		# order parks from closest minimum distance to hotspot to furthest
-		mymins <- mymins[order(mymins[,2], decreasing=FALSE),]
+		mymins <- mymins[order(mymins[,2], decreasing=FALSE),] # order parks from closest minimum distance to hotspot to furthest
 		parkdat <- merge(parkdat, mymins, by="parknumber")
 		parksort <- parkdat[order(parkdat[,9], decreasing=TRUE),]
 		parkmins <- unique(parksort[,c(1,8,9)])
 		parkmins$mins <- (parkmins$mins/5280)
 		
-		# LINE PLOT OF PARKS---------------------------------------------------------
-		distframe <- data.frame(park=1:583,
-					min=apply(distances,1,min),
-					max=apply(distances,1,max),
-					median=apply(distances,1,median))
-
 		# PLOTTING GRAPHS OF PARKS---------------------------------------------------
 		quartersmooth <- kernel2d(violentxy, poly, 1320, 100, 100)
 		quarterzval <- c(quartersmooth$z)
@@ -267,37 +254,38 @@
 			
 		
 		
-
-		distframe <- data.frame()
-		distframe <- t(distances)
-		names(distframe) <- c(1:583)
+		
+		#ggsave("Graphics/")
+		
+	
 		
 		
-		library(reshape2)
-		distmelt <- melt(t(distances))
-		boxplot(distmelt$value)
+		m1 <- apply(distances,1,min)/5280
+		m2 <- apply(distances,1,median)/5280
+		m3 <- apply(distances,1,max)/5280
 		
-		p <- ggplot(distframe, aes(park, median))
-		p + geom_pointrange(aes(ymin=min, ymax=max),
-				    data=distframe)
-		m1 <- apply(distances,1,min)
-		m2 <- apply(distances,1,median)
-		m3 <- apply(distances,1,max)
-
+		#m1[sort(m1)[50]<m1 & m1<sort(m1, decreasing = T)[50]] <- NA
+		grouping <- ifelse(m1<sort(m1)[51], "a", ifelse(m1>sort(m1, decreasing = T)[51], "c", "b"))
+		
 		df <- data.frame(min=m1, 
 				 med=m2, 
-				 max=m3)
+				 max=m3,
+				 group=grouping)
 		
 		df$park.order <- factor(unique(parkdat$id), levels = unique(parkdat$id)[order(df$min)])
 		
 		ggplot(aes(park.order,med), data=df) +
-			geom_pointrange(aes(ymin=min,ymax=max)) + 
+			geom_errorbarh(aes(ymin=min,ymax=max)) + 
 			theme(axis.text.x = element_text(angle = 60, hjust=1))
 		
-		
 		ggplot() +
-			geom_point(aes(min, park.order), data=df) +
-			theme(axis.text.x = element_text(size=1))
+			facet_grid(.~group, drop = T) +
+			geom_point(aes(x=min, y=park.order), size=.5, data = df) + 
+			geom_line(aes(x=min, y=as.numeric(park.order)), data = df) +
+			theme(axis.text.y = element_text(size = 2),
+			      axis.title = element_blank())
+		
+		
 		
 		
 		
